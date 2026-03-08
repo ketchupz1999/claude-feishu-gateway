@@ -1,0 +1,33 @@
+# Runtime data
+data/
+*.pid
+*.log
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+
+# Secrets — NEVER commit
+.claude/secrets/feishu_app.json
+config/env.conf
+*.secret
+*.key
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Feishu push dedup
+.last_sends
+
+# Session files
+.gateway_session
