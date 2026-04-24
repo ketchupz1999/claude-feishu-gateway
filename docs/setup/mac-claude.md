@@ -31,7 +31,7 @@ claude -p "说你好"   # 应返回一句话
 
 ```bash
 # 克隆
-git clone https://github.com/LieLieLiekey/claude-feishu-gateway.git
+git clone https://github.com/ketchupz1999/claude-feishu-gateway.git
 cd claude-feishu-gateway
 
 # 安装依赖

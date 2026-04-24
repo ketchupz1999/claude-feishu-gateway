@@ -6,6 +6,9 @@
 
 ## 按环境选择部署文档
 
+当前 `docs/setup/` 里的分步文档主要覆盖 Claude 模式。
+如果你要启用 Codex / Gemini / 微信 listener，请先看仓库根目录 `README.md` 里的 `Gateway 模式` 一节，并参考 `components/config.example.yaml`。
+
 ## macOS
 
 1. **方式一：通过第三方服务商**（如阶跃星辰 StepFun、DeepSeek）→ [mac-thirdparty.md](mac-thirdparty.md)

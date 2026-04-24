@@ -1,5 +1,10 @@
 # Runtime data
 data/
+components/config.yaml
+components/servers/gateway_codex/node_modules/
+components/servers/gateway_codex/dist/
+components/servers/weixin_listener/node_modules/
+components/servers/weixin_listener/dist/
 *.pid
 *.log
 

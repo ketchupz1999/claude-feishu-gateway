@@ -48,7 +48,7 @@ DeepSeek 类似：注册 → 控制台 → 创建 API Key
 
 ```bash
 # 克隆
-git clone https://github.com/LieLieLiekey/claude-feishu-gateway.git
+git clone https://github.com/ketchupz1999/claude-feishu-gateway.git
 cd claude-feishu-gateway
 
 # 安装 Python 依赖包
