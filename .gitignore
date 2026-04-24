@@ -36,3 +36,7 @@ Thumbs.db
 
 # Session files
 .gateway_session
+memory/session-handoffs/
+
+# Local agent planning
+.a-confirm/

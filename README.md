@@ -1,37 +1,38 @@
 # Claude Feishu Gateway
 
-把飞书消息转发到你本机的 AI Coding Agent，无需公网服务器。
+把飞书 / 微信消息转发到你本机的 AI Coding Agent。
 
-通过飞书 WebSocket 长链接，只需在电脑上启动 `make gateway`，飞书 Bot 收到的消息就会转给本机运行时执行，再把结果发回飞书。
+无需公网服务器。只要本机启动 `make gateway`，就可以在手机上调用 Claude Code、Codex CLI 或 Gemini CLI，让它们在你的电脑里读文件、执行命令、继续会话，并把结果回传到聊天窗口。
 
-当前开源版支持 Claude、Codex、Gemini 三种 Gateway 运行时，并提供可选微信 listener。
+![Claude Feishu Gateway 架构图](assets/gateway-architecture.png)
 
-![img](assets/basic-framework.png)
+## 核心能力
 
-支持会话续聊、历史会话切换、执行中断、运行状态回传，以及可选的微信通道。
+- **多运行时**：支持 Claude、Codex、Gemini
+- **多入口**：飞书 Bot，微信 listener 可选
+- **会话管理**：`/sessions`、`/switch`、`/pin`
+- **执行控制**：`/stop` 中断任务，运行状态实时回传
+- **模型切换**：Claude / Codex 支持 `/model`
+- **可恢复工作流**：`sh-save` 保存进度，`sh-load` 恢复上下文
+- **本地优先**：凭证、登录态、handoff、运行数据都留在本机
 
-![img](assets/img_2026-03-09-01-51-40.png)
+## 它能解决什么问题
 
-## 它能干什么
+**1. 随时随地驱动本机 Agent**
 
-**1. 知识库结构 + 自我进化**
+手机打字或语音，消息经飞书或微信转给本机 Claude / Codex / Gemini 运行时。执行完成后，结果会回传到聊天窗口。不用开电脑，不用 SSH，不用记命令。
 
-定义了数据怎么组织、知识怎么沉淀（基于PARA），让 agent 能快速查到需要的东西。知识库自检和自我进化是两个独立的定时任务，自动跑。
+**2. 在多个 Agent 之间切换**
 
-![](assets/self-evolve.png)
+同一个 Gateway 可以按配置切换到 Claude、Codex 或 Gemini。你可以继续使用原来的 Claude Code，也可以把 Codex / Gemini 接入同一套飞书入口。
 
-**2. 随时随地通过飞书驱动 agent**
+**3. 长任务可以保存和恢复**
 
-手机打字或语音，消息经飞书转给本机 Claude / Codex / Gemini 运行时，执行完结果发回来。不用开电脑，不用 SSH，不用记命令。
+通过 `sh-save` / `sh-load` 保存和恢复本地会话交接。长任务中断后，可以先保存当前目标、已完成内容、决策、风险和下一步；下次新会话直接恢复到可执行状态。
 
-![](assets/bot_usecase1.png)
+**4. 保留本地知识库和 Skill**
 
-**3. 多运行时 Gateway**
-
-- `gateway_mode: claude`：沿用原有 Python Gateway
-- `gateway_mode: codex`：启用 Node Gateway + Codex SDK
-- `gateway_mode: gemini`：启用 Node Gateway + Gemini CLI Core
-- 微信 listener 可作为可选通道接入同一套 Gateway
+仓库内置 PARA 风格的知识组织方式和通用 Skill。`kb-evolve` 用于知识库进化与代码自省，`kb-distill` 用于把会话经验、调研结论和踩坑记录沉淀下来。
 
 ## 能力矩阵
 
@@ -53,13 +54,6 @@
 - 可选微信 listener
 - 会话、模型、停止等基础控制命令
 
-明确不包含：
-
-- 个人 skill passthrough
-- 私有凭证 / 账号登录态
-- 交易、金融、私有脚本链路
-- 私人知识库或业务数据
-
 ## 包含什么
 
 | 组件                     | 说明                                                                 |
@@ -67,7 +61,7 @@
 | **Gateway**        | Python Claude Gateway + Node Codex/Gemini Gateway |
 | **Daemon**         | 类 cron 调度器，触发 Claude Code skill，支持自适应调度               |
 | **CLAUDE.md**      | 知识库组织规则，Agent 行为准则                                       |
-| **5 个通用 Skill** | knowledge-evolve, health-check, skill-creator, eat, root-review      |
+| **7 个通用 Skill** | kb-evolve, kb-distill, sh-save, sh-load, skill-creator, root-review, feishu-push |
 | **feishu-push**    | 飞书 Webhook 推送工具（告警/日报/通用消息）                          |
 
 ## 快速开始
@@ -96,7 +90,7 @@ make init
 cp .claude/secrets/feishu_app.example.json .claude/secrets/feishu_app.json
 # 编辑 feishu_app.json，填入 app_id、app_secret、allowed_open_id
 
-# 3. 选择 Gateway 运行时（默认 claude）
+# 3. 选择 Gateway 运行时（默认 codex）
 cp components/config.example.yaml components/config.yaml
 # 编辑 components/config.yaml，把 gateway_mode 改成 claude / codex / gemini
 
@@ -110,27 +104,15 @@ make daemon     # 后台守护（可选）
 
 ## Gateway 模式
 
-### Claude 模式
-
-默认模式，沿用原有 Python Gateway：
-
-```bash
-make gateway
-```
-
-前置条件：
-
-- 已安装并登录 Claude Code，或已配置 `config/env.conf` 里的 Anthropic 兼容 API。
-
 ### Codex 模式
 
-通过 `components/config.yaml` 启用：
+默认模式，通过 `components/config.yaml` 启用：
 
 ```yaml
 gateway_mode: codex
 ```
 
-启动前安装并测试 Node Gateway：
+`make init` 会安装 Node Gateway 依赖。你也可以单独安装并测试：
 
 ```bash
 make gateway-codex-install
@@ -144,6 +126,22 @@ make gateway
 - 本机 Codex CLI / SDK 已可用。
 - 不设置 `CODEX_API_KEY` 时，会复用本机 Codex 登录态。
 - `CODEX_SANDBOX_MODE` 和 `CODEX_APPROVAL_POLICY` 可通过环境变量调整。
+
+### Claude 模式
+
+沿用原有 Python Gateway：
+
+```yaml
+gateway_mode: claude
+```
+
+```bash
+make gateway
+```
+
+前置条件：
+
+- 已安装并登录 Claude Code，或已配置 `config/env.conf` 里的 Anthropic 兼容 API。
 
 ### Gemini 模式
 
@@ -238,12 +236,13 @@ ANTHROPIC_MODEL=step-3.5-flash
 
 | Skill                | 说明                           |
 | -------------------- | ------------------------------ |
-| `knowledge-evolve` | 知识库自检与进化，清理过时内容 |
-| `health-check`     | 系统健康检查，一句话看全局状态 |
-| `skill-creator`    | 让 agent 自己创建新 Skill      |
-| `eat`              | 喂一篇文章，agent 消化进知识库 |
-| `root-review`      | 根因分析，定位问题根源         |
-| `feishu-push`      | 飞书 Webhook 推送              |
+| `kb-evolve`      | 知识库进化与代码自省，清理过时内容 |
+| `kb-distill`     | 将会话经验、调研结论、踩坑记录沉淀为知识 |
+| `sh-save`        | 保存当前任务的短期会话交接 |
+| `sh-load`        | 从本地 handoff 恢复可执行工作简报 |
+| `skill-creator`  | 让 agent 自己创建新 Skill      |
+| `root-review`    | 根因分析，定位问题根源         |
+| `feishu-push`    | 飞书 Webhook 推送              |
 
 ## 飞书聊天命令
 

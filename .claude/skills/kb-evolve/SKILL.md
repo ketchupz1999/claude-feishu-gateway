@@ -1,23 +1,23 @@
 ---
-name: knowledge-evolve
+name: kb-evolve
 description: "知识库进化与代码自省。审计 memory/long 一致性、沉淀 scratch 到长期记忆、清理过期 todo、扫描代码 TODO/FIXME、分析 daemon 错误根因、发现外部 skills/MCP 工具。当用户提到知识进化、memory 审计、代码自省、知识整理、认知迭代、能力发现时触发此 skill。"
 ---
 
-# knowledge-evolve — 知识审计、代码自省与能力发现
+# kb-evolve — 知识审计、代码自省与能力发现
 
-与 health-check 的分工：health-check = 系统健康巡检（进程/日志/data 新鲜度），knowledge-evolve = 认知迭代（知识质量/代码质量/外部资源）。
+kb-evolve 负责认知迭代：检查知识质量、代码 TODO、过期 scratch、daemon 错误模式和可用能力。
 
 ## 触发时机
 
-- 手动：`/knowledge-evolve`
-- 自动：daemon 每周四 19:00 UTC（北京周五 03:00），与 health-check（周一）错开
+- 手动：`/kb-evolve`
+- 自动：daemon 每周四 19:00 UTC（北京周五 03:00）
 
 ## 执行流程
 
 ### Step 1 — 知识库健康采集
 
 ```bash
-python3 .claude/skills/knowledge-evolve/scripts/knowledge_audit.py
+python3 .claude/skills/kb-evolve/scripts/knowledge_audit.py
 ```
 
 脚本输出 JSON，包含：
@@ -42,7 +42,7 @@ python3 .claude/skills/knowledge-evolve/scripts/knowledge_audit.py
 
 - 超过 7 天的 scratch 文件 → 读取内容，提取有价值的认知写入 `memory/long/` 对应文件
 - 提取完成后删除源 scratch 文件
-- 跳过近期的 health-check / knowledge-evolve 报告（保留最近 2 份作为趋势对比基线）
+- 跳过近期的 kb-evolve 报告（保留最近 2 份作为趋势对比基线）
 
 #### 2c. todo 清理
 
@@ -82,7 +82,7 @@ python3 .claude/skills/knowledge-evolve/scripts/knowledge_audit.py
 
 #### 4a. 生成报告
 
-报告写入 `memory/scratch/YYYYMMDD-knowledge-evolve.md`：
+报告写入 `memory/scratch/YYYYMMDD-kb-evolve.md`：
 
 ```markdown
 # 知识进化报告 — YYYY-MM-DD
@@ -117,7 +117,7 @@ python3 .claude/skills/knowledge-evolve/scripts/knowledge_audit.py
 
 ```bash
 git add <本次修改的文件>
-git commit -m "chore: knowledge-evolve MMDD — <一句话摘要>"
+git commit -m "chore: kb-evolve MMDD — <一句话摘要>"
 ```
 
 只 commit 本次知识进化涉及的文件，不捎带其他未关联变更。
