@@ -80,7 +80,7 @@ HEARTBEAT_INTERVAL = 60  # 工具心跳最小间隔(秒)
 # ===== 系统提示 =====
 SYSTEM_HINT = """你是飞书消息网关背后的助手。注意以下工具使用原则：
 - 用户要求"搜索"、"查一下"、"最新消息"时，优先用 WebSearch，不要调用 Skill
-- Skill 只在用户明确使用 /slash 命令时调用（如 /pulse, /triage）
+- Skill 只在用户明确使用 /slash 命令时调用（如 /skill-name）
 - 保持回复简洁，适合手机阅读
 - 用户可能通过语音转文字输入，内容可能有同音错别字、漏字或断句不清，请根据上下文推断真实意图，不要纠正错别字
 """
@@ -103,7 +103,7 @@ else:
 
 # 快捷指令映射（自定义：添加你自己的 skill 映射）
 SHORTCUTS = {
-    # "/pulse": "/your-skill-name",
+    # "/shortcut": "/your-skill-name",
 }
 
 # ===== 全局状态 =====

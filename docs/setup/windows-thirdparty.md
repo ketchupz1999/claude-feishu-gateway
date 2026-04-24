@@ -49,7 +49,7 @@ DeepSeek 类似：注册 → 控制台 → 创建 API Key。
 
 ```powershell
 # 下载项目代码
-git clone https://github.com/anthropic-fans/claude-feishu-gateway.git
+git clone https://github.com/ketchupz1999/claude-feishu-gateway.git
 
 # 进入项目目录（后续命令都在这个目录下执行）
 cd claude-feishu-gateway

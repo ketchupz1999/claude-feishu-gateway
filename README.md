@@ -1,14 +1,14 @@
 # Claude Feishu Gateway
 
-无需公网、服务器
+把飞书消息转发到你本机的 AI Coding Agent，无需公网服务器。
 
-通过 WebSocket 长链接，只需在电脑启动(make gateway)，就可以跟飞书建立长链接🔗
+通过飞书 WebSocket 长链接，只需在电脑上启动 `make gateway`，飞书 Bot 收到的消息就会转给本机运行时执行，再把结果发回飞书。
 
-当在飞书与 Bot 发消息时，飞书消息进来转给我们的电脑，电脑执行 Claude Code，结果回传飞书。
+当前开源版支持 Claude、Codex、Gemini 三种 Gateway 运行时，并提供可选微信 listener。
 
 ![img](assets/basic-framework.png)
 
-支持 session 续聊、模型热切换
+支持会话续聊、历史会话切换、执行中断、运行状态回传，以及可选的微信通道。
 
 ![img](assets/img_2026-03-09-01-51-40.png)
 
@@ -20,21 +20,51 @@
 
 ![](assets/self-evolve.png)
 
-**2. 随时随地通过手机飞书驱动 agent**
+**2. 随时随地通过飞书驱动 agent**
 
-手机打字或语音，消息经飞书转给 Claude Code，执行完结果发回来。不用开电脑，不用 SSH，不用记命令。
+手机打字或语音，消息经飞书转给本机 Claude / Codex / Gemini 运行时，执行完结果发回来。不用开电脑，不用 SSH，不用记命令。
 
 ![](assets/bot_usecase1.png)
 
-**3. Claude Code 的完整 Agent 能力**
+**3. 多运行时 Gateway**
 
-Gateway 只做透传，不做裁剪。Claude Code 的所有能力——Skill、subagent、MCP、文件读写、命令执行——全部可用。
+- `gateway_mode: claude`：沿用原有 Python Gateway
+- `gateway_mode: codex`：启用 Node Gateway + Codex SDK
+- `gateway_mode: gemini`：启用 Node Gateway + Gemini CLI Core
+- 微信 listener 可作为可选通道接入同一套 Gateway
+
+## 能力矩阵
+
+| 能力 | Claude | Codex | Gemini | 微信 listener |
+| --- | --- | --- | --- | --- |
+| 飞书消息入口 | 是 | 是 | 是 | 可选旁路 |
+| 会话续聊 | 是 | 是 | 是 | 走 Codex |
+| `/sessions` 历史会话 | 是 | 是 | 是 | 不适用 |
+| `/switch` 切换会话 | 是 | 是 | 是 | 不适用 |
+| `/model` 模型切换 | 是 | 是 | 暂不支持 | 不适用 |
+| `/stop` 中断任务 | 是 | 是 | 是 | 不适用 |
+
+## 开源边界
+
+这个仓库只保留通用 Gateway 能力：
+
+- Claude / Codex / Gemini Gateway
+- 飞书 Bot 长连接入口
+- 可选微信 listener
+- 会话、模型、停止等基础控制命令
+
+明确不包含：
+
+- 个人 skill passthrough
+- 私有凭证 / 账号登录态
+- 交易、金融、私有脚本链路
+- 私人知识库或业务数据
 
 ## 包含什么
 
 | 组件                     | 说明                                                                 |
 | ------------------------ | -------------------------------------------------------------------- |
-| **Gateway**        | 200 行 Python，飞书消息转 Claude Code，支持 session 续聊、模型热切换 |
+| **Gateway**        | Python Claude Gateway + Node Codex/Gemini Gateway |
 | **Daemon**         | 类 cron 调度器，触发 Claude Code skill，支持自适应调度               |
 | **CLAUDE.md**      | 知识库组织规则，Agent 行为准则                                       |
 | **5 个通用 Skill** | knowledge-evolve, health-check, skill-creator, eat, root-review      |
@@ -45,16 +75,20 @@ Gateway 只做透传，不做裁剪。Claude Code 的所有能力——Skill、s
 ### 你需要准备
 
 1. **一台普通电脑**（Windows / Mac / Linux）
-2. **模型服务**，二选一：
-   - [Claude Code 订阅](https://claude.ai/claude-code)（推荐，能力最完整）
-   - 兼容 Anthropic API 的第三方服务商（StepFun、DeepSeek 等），无需订阅
+2. **至少一种本机 Agent 登录态**
+   - Claude：Claude Code，或兼容 Anthropic API 的第三方服务商
+   - Codex：Codex CLI / Codex SDK 可用登录态
+   - Gemini：Gemini CLI 登录态，或 `GEMINI_API_KEY`
 3. **飞书自建应用**（免费，5 分钟创建）
+4. **Node.js**
+   - Codex / Gemini Gateway：Node.js `>=20`
+   - 微信 listener：Node.js `>=22`
 
-### 三步启动
+### 四步启动
 
 ```bash
 # 1. 克隆仓库
-git clone https://github.com/LieLieLiekey/claude-feishu-gateway.git
+git clone https://github.com/ketchupz1999/claude-feishu-gateway.git
 cd claude-feishu-gateway
 
 # 2. 安装依赖 + 配置飞书凭证
@@ -62,13 +96,114 @@ make init
 cp .claude/secrets/feishu_app.example.json .claude/secrets/feishu_app.json
 # 编辑 feishu_app.json，填入 app_id、app_secret、allowed_open_id
 
-# 3. 启动
+# 3. 选择 Gateway 运行时（默认 claude）
+cp components/config.example.yaml components/config.yaml
+# 编辑 components/config.yaml，把 gateway_mode 改成 claude / codex / gemini
+
+# 4. 启动
 make check      # 配置检查
 make gateway    # 飞书网关
 make daemon     # 后台守护（可选）
 ```
 
 打开飞书，给你的 Bot 发一条消息，就开始干活了。
+
+## Gateway 模式
+
+### Claude 模式
+
+默认模式，沿用原有 Python Gateway：
+
+```bash
+make gateway
+```
+
+前置条件：
+
+- 已安装并登录 Claude Code，或已配置 `config/env.conf` 里的 Anthropic 兼容 API。
+
+### Codex 模式
+
+通过 `components/config.yaml` 启用：
+
+```yaml
+gateway_mode: codex
+```
+
+启动前安装并测试 Node Gateway：
+
+```bash
+make gateway-codex-install
+make gateway-codex-build
+make gateway-codex-test
+make gateway
+```
+
+前置条件：
+
+- 本机 Codex CLI / SDK 已可用。
+- 不设置 `CODEX_API_KEY` 时，会复用本机 Codex 登录态。
+- `CODEX_SANDBOX_MODE` 和 `CODEX_APPROVAL_POLICY` 可通过环境变量调整。
+
+### Gemini 模式
+
+通过 `components/config.yaml` 启用：
+
+```yaml
+gateway_mode: gemini
+```
+
+启动方式同 Node Gateway：
+
+```bash
+make gateway-codex-install
+make gateway-codex-build
+make gateway-codex-test
+make gateway
+```
+
+前置条件：
+
+- 本机 `gemini` CLI 已登录，或配置了 `GEMINI_API_KEY`。
+- Gateway 不会在后台进程里弹浏览器登录；未登录时会直接向飞书返回“Gemini 未登录”。
+- Gemini 模式当前不支持飞书侧 `/model` 切换，请在 Gemini CLI 配置里调整默认模型。
+
+### 微信 listener
+
+微信通道是可选能力：
+
+```bash
+make weixin-doctor
+make weixin-setup
+make weixin-login
+```
+
+要求 Node.js `>=22`，登录态默认写在本地 `data/weixin_state/`，不会进入 git。
+
+如需随 Gateway 一起启动，启用 `components/config.yaml`：
+
+```yaml
+listener_channels:
+  weixin:
+    enabled: true
+```
+
+## 发布前验收
+
+发版或提 PR 前建议至少跑：
+
+```bash
+make check
+make gateway-codex-build
+make gateway-codex-test
+make weixin-doctor
+```
+
+本机联调建议按阶段验证：
+
+1. `gateway_mode: codex`，飞书发送 `hi`、`/sessions`、`/stop`。
+2. `gateway_mode: gemini`，飞书发送 `hi`、`/sessions`、一个只读文件问题。
+3. 如果启用微信，先执行 `make weixin-login`，再启动 listener。
 
 ### 详细部署文档
 
@@ -114,10 +249,13 @@ ANTHROPIC_MODEL=step-3.5-flash
 
 | 命令             | 说明         |
 | ---------------- | ------------ |
+| `/model`       | 查看或切换模型（Claude / Codex 模式；Gemini 暂不支持） |
 | `/clear`       | 清除当前会话 |
-| `/new 名称`    | 新建命名会话 |
+| `/new`         | 新建会话 |
 | `/sessions`    | 查看会话列表 |
-| `/switch 名称` | 切换会话     |
+| `/switch 1`    | 按序号切换历史会话 |
+| `/pin 1`       | 置顶历史会话（Codex 模式） |
+| `/unpin 1`     | 取消置顶（Codex 模式） |
 | `/stop`        | 中断当前执行 |
 
 ## 目录结构
@@ -126,10 +264,12 @@ ANTHROPIC_MODEL=step-3.5-flash
 claude-feishu-gateway/
 ├── components/
 │   ├── servers/
-│   │   ├── feishu_gateway.py        # 飞书 WebSocket 网关（核心）
-│   │   ├── gateway_commands.py      # 命令路由（/model, /clear, /stop ...）
-│   │   ├── gateway_messaging.py     # 消息解析与回复
-│   │   └── gateway_sessions.py      # 多会话管理与持久化
+│   │   ├── feishu_gateway.py        # Python Claude Gateway
+│   │   ├── gateway_codex/           # Node Gateway（Codex / Gemini）
+│   │   ├── weixin_listener/         # 微信 listener
+│   │   ├── gateway_commands.py      # Python Gateway 命令路由
+│   │   ├── gateway_messaging.py     # Python Gateway 消息解析与回复
+│   │   └── gateway_sessions.py      # Python Gateway 会话管理
 │   ├── daemon/
 │   │   └── daemon.py                # 定时调度器
 │   └── scripts/
