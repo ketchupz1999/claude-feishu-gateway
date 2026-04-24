@@ -5,7 +5,7 @@
 用法:
     python3 components/daemon/daemon.py              # 前台运行
     nohup python3 components/daemon/daemon.py &      # 后台运行
-    python3 components/daemon/daemon.py --once check # 单次执行（调试用）
+    python3 components/daemon/daemon.py --once knowledge # 单次执行（调试用）
 
 调度规则在 SCHEDULE 中定义，格式类似 cron。
 运行在用户 shell 环境中，Claude CLI auth 天然可用。
@@ -34,8 +34,6 @@ COOLDOWN_SECONDS = 600  # 冷却 10 分钟
 #
 # 自定义：按需添加你自己的调度规则
 SCHEDULE = [
-    # 系统自检: 每周日 19:00 UTC
-    ("系统自检", "evolve", [19], [0], [0]),
     # 知识进化: 每周四 19:00 UTC
     ("知识进化", "knowledge", [19], [0], [4]),
     # 示例: 每天 00:00 UTC 执行某个 skill

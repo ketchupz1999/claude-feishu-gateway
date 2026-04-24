@@ -10,7 +10,7 @@ WORKSPACE="$(cd "$(dirname "$0")/../.." && pwd)"
 source "$WORKSPACE/config/models.sh"
 LOGDIR="$WORKSPACE/data/logs"
 CLAUDE_BIN="${CLAUDE_BIN:-claude}"
-PERIOD="${1:-evolve}"
+PERIOD="${1:-knowledge}"
 DATE=$(date +%Y-%m-%d)
 TIMESTAMP=$(date +%Y%m%d-%H%M%S)
 LOGFILE="$LOGDIR/$DATE-$PERIOD-$TIMESTAMP.log"
@@ -31,13 +31,13 @@ run_claude() {
 
 case "$PERIOD" in
     evolve)
-        log "=== 系统自检 (model=$CHEAP_MODEL) ==="
-        run_claude "系统自检" "/health-check" "$CHEAP_MODEL"
-        log "=== 系统自检完成 ==="
+        log "=== 知识进化 (兼容 evolve, model=$CHEAP_MODEL) ==="
+        run_claude "知识进化" "/kb-evolve" "$CHEAP_MODEL"
+        log "=== 知识进化完成 ==="
         ;;
     knowledge)
         log "=== 知识进化 (model=$CHEAP_MODEL) ==="
-        run_claude "知识进化" "/knowledge-evolve" "$CHEAP_MODEL"
+        run_claude "知识进化" "/kb-evolve" "$CHEAP_MODEL"
         log "=== 知识进化完成 ==="
         ;;
     # 在这里添加自定义任务:
@@ -47,7 +47,7 @@ case "$PERIOD" in
     #     log "=== 自定义任务完成 ==="
     #     ;;
     *)
-        echo "用法: $0 <evolve|knowledge|your-task>" >&2
+        echo "用法: $0 <knowledge|evolve|your-task>" >&2
         exit 1
         ;;
 esac

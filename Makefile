@@ -6,7 +6,7 @@ GATEWAY_CONFIG_FILE := $(CURDIR)/components/config.yaml
 GATEWAY_CONFIG_EXAMPLE := $(CURDIR)/components/config.example.yaml
 READ_GATEWAY_MODE = mode="$$(sed -n 's/^gateway_mode:[[:space:]]*//p' $(GATEWAY_CONFIG_FILE) 2>/dev/null | head -1 | tr -d '[:space:]')"; \
 	[ -n "$$mode" ] || mode="$$(sed -n 's/^gateway_mode:[[:space:]]*//p' $(GATEWAY_CONFIG_EXAMPLE) 2>/dev/null | head -1 | tr -d '[:space:]')"; \
-	[ -n "$$mode" ] || mode="claude"; \
+	[ -n "$$mode" ] || mode="codex"; \
 	if [ "$$mode" != "claude" ] && [ "$$mode" != "codex" ] && [ "$$mode" != "gemini" ]; then \
 		echo "ERROR: unsupported gateway_mode=$$mode (expected claude|codex|gemini)"; \
 		exit 1; \
@@ -57,8 +57,9 @@ WEIXIN_LISTENER_DIR := components/servers/weixin_listener
 init: ## [setup] 安装依赖 + 创建目录
 	@$(call RUN,$(BOOTSTRAP_PYTHON) -m venv .venv)
 	@$(call RUN,$(VENV_PYTHON) -m pip install -r requirements.txt)
-	@$(call RUN,mkdir -p data/logs memory/{scratch,long} todo knowledge/{areas,projects,resources,archive})
-	@echo "✓ 依赖已安装到 .venv，目录已创建"
+	@$(call RUN,cd components/servers/gateway_codex && npm install)
+	@$(call RUN,mkdir -p data/logs memory/scratch memory/long todo knowledge/areas knowledge/projects knowledge/resources knowledge/archive)
+	@echo "✓ Python / Node 依赖已安装，目录已创建"
 
 .PHONY: check
 check: ## [setup] 启动前配置检查

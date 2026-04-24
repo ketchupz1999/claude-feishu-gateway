@@ -5,7 +5,7 @@ set -e
 WORKSPACE="$(cd "$(dirname "$0")/.." && pwd)"
 SECRETS_FILE="$WORKSPACE/.claude/secrets/feishu_app.json"
 PYTHON_BIN="${PYTHON:-python3}"
-GATEWAY_MODE="${GATEWAY_MODE:-claude}"
+GATEWAY_MODE="${GATEWAY_MODE:-codex}"
 OK=true
 
 echo "=== Claude Feishu Gateway 配置检查 ==="

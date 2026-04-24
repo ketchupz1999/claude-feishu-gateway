@@ -7,7 +7,7 @@
 # - claude: Python gateway + Claude Code SDK
 # - codex: Node gateway + Codex SDK
 # - gemini: Node gateway + Gemini CLI core
-gateway_mode: claude
+gateway_mode: codex
 
 # Codex-only knob. Ignored by Python gateway.
 codex_reasoning_effort: high

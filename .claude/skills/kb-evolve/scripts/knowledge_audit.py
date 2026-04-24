@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 知识库健康审计脚本 — 采集 memory/todo/agent-memory/daemon-logs/code-todos 指标
-输出 JSON 供 knowledge-evolve skill 消费
+输出 JSON 供 kb-evolve skill 消费
 """
 
 import json
@@ -14,7 +14,7 @@ from collections import Counter
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
-WORKSPACE = Path(__file__).resolve().parents[4]  # .claude/skills/knowledge-evolve/scripts/ → root
+WORKSPACE = Path(__file__).resolve().parents[4]  # .claude/skills/kb-evolve/scripts/ → root
 MEMORY_DIR = WORKSPACE / "memory"
 TODO_DIR = WORKSPACE / "todo"
 AGENT_MEMORY_DIR = WORKSPACE / ".claude" / "agent-memory"
@@ -169,7 +169,7 @@ def check_code_todos():
             proc = subprocess.run(
                 ["grep", "-rn", r"#\s*TODO\|#\s*FIXME\|#\s*HACK\|//\s*TODO\|//\s*FIXME\|//\s*HACK",
                  "--include=*.py", "--include=*.sh",
-                 "--exclude-dir=knowledge-evolve",
+                 "--exclude-dir=kb-evolve",
                  str(scan_dir)],
                 capture_output=True, text=True, timeout=10,
             )
@@ -193,12 +193,12 @@ def check_code_todos():
 
 
 def check_previous_reports():
-    """读取之前的 knowledge-evolve 报告"""
+    """读取之前的 kb-evolve 报告"""
     scratch_dir = MEMORY_DIR / "scratch"
     if not scratch_dir.exists():
         return []
     reports = []
-    for f in sorted(scratch_dir.glob("*knowledge-evolve*.md")):
+    for f in sorted(scratch_dir.glob("*kb-evolve*.md")):
         reports.append({
             "file": f.name,
             "date": f.name[:8] if len(f.name) >= 8 else "unknown",
